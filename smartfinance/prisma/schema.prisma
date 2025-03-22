@@ -14,11 +14,25 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            Int       @id @default(autoincrement())
   clerkUserId   String    @unique // clerk user id
   email         String    @unique
   name          String?
   imageUrl      String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+}
+
+model Lesson{
+  id            Int       @id @default(autoincrement())
+  lessonid      Int
+  order         Int
+  type          LessonDataType
+  content       String
+}
+
+enum LessonDataType {
+  STRING
+  IMGLABEL
+  IMGURL
 }

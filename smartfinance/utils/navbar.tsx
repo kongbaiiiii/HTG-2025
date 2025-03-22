@@ -7,8 +7,10 @@ import {
   SignedOut,
   UserButton,
 } from "@clerk/nextjs";
+import {checkUser} from "@/utils/checkUser";
 
-export default function Navbar() {
+export default async function Navbar() {
+  await checkUser();
   return (
     <header className="w-full flex justify-between items-center py-4">
       <div className="flex items-center gap-2">
