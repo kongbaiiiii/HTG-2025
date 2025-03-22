@@ -5,10 +5,7 @@ export default function Home() {
 
 
   return (
-    <div className="grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen pt-2 px-8 pb-20 gap-8 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <Navbar />
-
+    <div >
       {/* Main Content */}
       <main className="flex flex-col gap-[32px] items-center text-center max-w-4xl">
         <div className="space-y-4">
@@ -56,9 +53,9 @@ export default function Home() {
           </a>
           <a
             className="rounded-full border border-solid border-blue-600 dark:border-blue-400 transition-colors flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium text-sm sm:text-base h-12 px-6 w-full sm:w-auto"
-            href="#"
+            href="/simulation"
           >
-            Take Assessment
+            Begin Simulation
           </a>
         </div>
       </main>

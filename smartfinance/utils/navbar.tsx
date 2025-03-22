@@ -16,19 +16,19 @@ export default function Navbar() {
         <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Smart Finance</h1>
       </div>
       <div className="flex items-center gap-4">
-        <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Learn</Link>
-        <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Tools</Link>
-        <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">About</Link>
+        <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Home</Link>
+        <Link href="/simulation" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Simulation</Link>
+        <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">About</Link>
         <SignedOut>
-          <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors [&>*]:cursor-pointer">
+          <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors  text-lg [&>*]:cursor-pointer [&>*]:font-bold">
             <SignInButton />
           </div>
-          <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors [&>*]:cursor-pointer">
+          <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold [&>*]:cursor-pointer">
             <SignUpButton />
           </div>
         </SignedOut>
         <SignedIn>
-          <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors [&>*]:cursor-pointer">
+          <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold [&>*]:cursor-pointer">
             <UserButton />
           </div>
         </SignedIn>

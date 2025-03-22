@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.12.8",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.4.8",
+    "@mui/material": "^6.4.8",
     "@prisma/client": "^6.5.0",
     "@prisma/studio": "^0.511.0",
     "lucide-react": "^0.483.0",
