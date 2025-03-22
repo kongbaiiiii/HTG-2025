@@ -1,25 +1,47 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Box, 
-  Button, 
-  Container, 
-  Grid, 
-  Paper, 
-  Typography, 
-  Slider, 
-  Card, 
-  CardContent,
-  Avatar,
-  LinearProgress,
-  IconButton
-} from '@mui/material';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import CasinoIcon from '@mui/icons-material/Casino';
-import SchoolIcon from '@mui/icons-material/School';
-import WorkIcon from '@mui/icons-material/Work';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+// Custom hook to prevent scroll locking
+function usePreventScrollLock() {
+  useEffect(() => {
+    const restoreStyles = () => {
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+      
+      if (window.matchMedia('(min-width: 640px)').matches) {
+        document.body.style.paddingLeft = '5rem';
+        document.body.style.paddingRight = '5rem';
+      } else {
+        document.body.style.paddingLeft = '2rem';
+        document.body.style.paddingRight = '2rem';
+      }
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'style') {
+          restoreStyles();
+        }
+      });
+    });
+
+    observer.observe(document.body, { attributes: true });
+    restoreStyles();
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+}
 
 const FinancialSimulation = () => {
   // Game state
@@ -27,6 +49,12 @@ const FinancialSimulation = () => {
   const [day, setDay] = useState(1);
   const [happiness, setHappiness] = useState(80);
   const [skills, setSkills] = useState(10);
+  
+  // Add state for dialog
+  const [dialogOpen, setDialogOpen] = useState(true);
+  
+  // Use the custom hook
+  usePreventScrollLock();
   
   // Investment options (placeholder data)
   const investments = [
@@ -60,161 +88,166 @@ const FinancialSimulation = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h3" gutterBottom align="center" sx={{ fontFamily: 'Monospace', color: '#2e7d32' }}>
+    <div className="container mx-auto mt-4 mb-4 px-4">
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Open Dialog</button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Welcome to the Financial Fortune Simulator!</DialogTitle>
+            <DialogDescription className="text-base">
+              This is a simulation game where you can explore different financial strategies after high school. <br />
+              Start the simulation by inputing some essential information about yourself.
+            </DialogDescription>
+            <button className="w-24 bg-green-200 text-black px-4 py-2 rounded-md hover:bg-green-300">Next</button>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
+      <h1 className="text-3xl font-mono text-center text-green-700 mb-4">
         Financial Fortune Simulator 💰
-      </Typography>
+      </h1>
       
       {/* Player Stats */}
-      <Paper elevation={3} sx={{ p: 2, mb: 3, background: 'linear-gradient(45deg, #e3f2fd 30%, #bbdefb 90%)' }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={3}>
-            <Box display="flex" alignItems="center">
-              <AttachMoneyIcon sx={{ mr: 1, color: 'green' }} />
-              <Typography variant="h6">Cash: ${money.toLocaleString()}</Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box display="flex" alignItems="center">
-              <TrendingUpIcon sx={{ mr: 1, color: 'blue' }} />
-              <Typography variant="h6">Day: {day}</Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Typography variant="subtitle1">Happiness</Typography>
-            <Box display="flex" alignItems="center">
-              <Typography variant="body2" sx={{ mr: 1 }}>😢</Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={happiness} 
-                sx={{ width: '70%', height: 10, borderRadius: 5 }} 
-                color="success"
-              />
-              <Typography variant="body2" sx={{ ml: 1 }}>😄</Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Typography variant="subtitle1">Skills: {skills}</Typography>
-            <LinearProgress 
-              variant="determinate" 
-              value={skills} 
-              sx={{ width: '80%', height: 10, borderRadius: 5 }} 
-              color="primary"
-            />
-          </Grid>
-        </Grid>
-      </Paper>
+      <div className="p-4 mb-6 rounded-lg shadow-md bg-gradient-to-r from-blue-50 to-blue-100">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="flex items-center">
+            <span className="mr-2 text-green-600">💵</span>
+            <h2 className="text-xl">Cash: ${money.toLocaleString()}</h2>
+          </div>
+          <div className="flex items-center">
+            <span className="mr-2 text-blue-600">📈</span>
+            <h2 className="text-xl">Day: {day}</h2>
+          </div>
+          <div>
+            <p className="text-sm font-medium">Happiness</p>
+            <div className="flex items-center">
+              <span className="mr-2">😢</span>
+              <div className="w-4/5 bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-green-600 h-2.5 rounded-full" 
+                  style={{ width: `${happiness}%` }}
+                ></div>
+              </div>
+              <span className="ml-2">😄</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium">Skills: {skills}</p>
+            <div className="w-4/5 bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full" 
+                style={{ width: `${skills}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
       
       {/* Main Game Area */}
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Investments Section */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={3} sx={{ p: 2, height: '100%', background: 'linear-gradient(45deg, #e8f5e9 30%, #c8e6c9 90%)' }}>
-            <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-              <CasinoIcon sx={{ mr: 1 }} /> Investments
-            </Typography>
-            <Grid container spacing={2}>
-              {investments.map((investment) => (
-                <Grid item xs={12} sm={6} key={investment.id}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Typography variant="h6" color="primary">{investment.name}</Typography>
-                      <Typography variant="body2">Risk: {investment.risk}</Typography>
-                      <Typography variant="body2">Return: {investment.returnRate}</Typography>
-                      <Typography variant="body2">Min: ${investment.minInvestment}</Typography>
-                      <Button 
-                        variant="contained" 
-                        size="small" 
-                        sx={{ mt: 1 }}
-                        disabled={money < investment.minInvestment}
-                      >
-                        Invest
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        </Grid>
+        <div className="p-4 rounded-lg shadow-md bg-gradient-to-r from-green-50 to-green-100">
+          <h2 className="text-xl mb-4 flex items-center">
+            <span className="mr-2">🎲</span> Investments
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {investments.map((investment) => (
+              <div key={investment.id} className="border border-gray-200 rounded-md p-3">
+                <h3 className="text-lg text-blue-600">{investment.name}</h3>
+                <p className="text-sm">Risk: {investment.risk}</p>
+                <p className="text-sm">Return: {investment.returnRate}</p>
+                <p className="text-sm">Min: ${investment.minInvestment}</p>
+                <button 
+                  className={`mt-2 px-3 py-1 rounded-md text-white ${
+                    money < investment.minInvestment 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                  disabled={money < investment.minInvestment}
+                >
+                  Invest
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
         
         {/* Career Section */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={3} sx={{ p: 2, height: '100%', background: 'linear-gradient(45deg, #fff3e0 30%, #ffe0b2 90%)' }}>
-            <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-              <WorkIcon sx={{ mr: 1 }} /> Career
-            </Typography>
-            <Grid container spacing={2}>
-              {careers.map((career) => (
-                <Grid item xs={12} key={career.id}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Box>
-                          <Typography variant="h6" color="primary">{career.name}</Typography>
-                          <Typography variant="body2">Salary: ${career.salary}/day</Typography>
-                          <Typography variant="body2">Skills Required: {career.skillsRequired}</Typography>
-                        </Box>
-                        <Button 
-                          variant="contained" 
-                          color="secondary"
-                          disabled={skills < career.skillsRequired}
-                        >
-                          Apply
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-              <Grid item xs={12}>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  startIcon={<SchoolIcon />}
-                  onClick={learnSkills}
+        <div className="p-4 rounded-lg shadow-md bg-gradient-to-r from-orange-50 to-orange-100">
+          <h2 className="text-xl mb-4 flex items-center">
+            <span className="mr-2">💼</span> Career
+          </h2>
+          <div className="space-y-4">
+            {careers.map((career) => (
+              <div key={career.id} className="border border-gray-200 rounded-md p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg text-blue-600">{career.name}</h3>
+                    <p className="text-sm">Salary: ${career.salary}/day</p>
+                    <p className="text-sm">Skills Required: {career.skillsRequired}</p>
+                  </div>
+                  <button 
+                    className={`px-3 py-1 rounded-md text-white ${
+                      skills < career.skillsRequired 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                    disabled={skills < career.skillsRequired}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            ))}
+            <div className="border border-gray-200 rounded-md p-3">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg text-blue-600">Learn New Skills ($100)</h3>
+                </div>
+                <button 
+                  className={`px-3 py-1 rounded-md text-white ${
+                    money < 100 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
                   disabled={money < 100}
-                  fullWidth
+                  onClick={learnSkills}
                 >
-                  Learn New Skills ($100)
-                </Button>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
+                  Learn
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         
         {/* Random Events Section */}
-        <Grid item xs={12}>
-          <Paper elevation={3} sx={{ p: 2, background: 'linear-gradient(45deg, #f3e5f5 30%, #e1bee7 90%)' }}>
-            <Typography variant="h5" gutterBottom>Recent Events</Typography>
-            <Typography variant="body1" sx={{ fontStyle: 'italic' }}>
-              No recent events. Play more days to experience random financial events!
-            </Typography>
-          </Paper>
-        </Grid>
+        <div className="p-4 rounded-lg shadow-md bg-gradient-to-r from-purple-50 to-purple-100">
+          <h2 className="text-xl mb-4">Recent Events</h2>
+          <p className="text-base font-italic">
+            No recent events. Play more days to experience random financial events!
+          </p>
+        </div>
         
         {/* Game Controls */}
-        <Grid item xs={12}>
-          <Box display="flex" justifyContent="center" mt={2}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              size="large"
+        <div className="p-4 rounded-lg shadow-md bg-gradient-to-r from-pink-50 to-pink-100">
+          <div className="flex justify-center mt-4">
+            <button 
+              className={`px-4 py-2 rounded-full text-white ${
+                money < 1000 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-pink-600 hover:bg-pink-700'
+              }`}
+              disabled={money < 1000}
               onClick={advanceDay}
-              sx={{ 
-                px: 4, 
-                py: 1.5, 
-                borderRadius: 28,
-                background: 'linear-gradient(45deg, #4caf50 30%, #2e7d32 90%)',
-                boxShadow: '0 3px 5px 2px rgba(46, 125, 50, .3)'
-              }}
             >
               Advance to Next Day
-            </Button>
-          </Box>
-        </Grid>
-      </Grid>
-    </Container>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
