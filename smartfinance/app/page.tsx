@@ -2,23 +2,12 @@ import Image from "next/image";
 import Navbar from "@/utils/navbar";
 import { DollarSign, ChartCandlestick, CreditCard, Aperture } from 'lucide-react';
 export default function Home() {
+
+
   return (
-    <div className="grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen p-8 pb-20 gap-8 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-800">
+    <div className="grid grid-rows-[auto_1fr_auto] items-center justify-items-center min-h-screen pt-2 px-8 pb-20 gap-8 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-800">
       {/* Header */}
-      <header className="w-full flex justify-between items-center py-4">
-        <div className="flex items-center gap-2">
-          {/* <Image
-            src="/dollar-sign.svg" // You'll need to create this icon
-            alt="FinEd Logo"
-            width={32}
-            height={32}
-            className="text-blue-600"
-          /> */}
-          <Aperture className="text-blue-600 dark:text-blue-400" />
-          <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Smart Finance</h1>
-        </div>
-        <Navbar />
-      </header>
+      <Navbar />
 
       {/* Main Content */}
       <main className="flex flex-col gap-[32px] items-center text-center max-w-4xl">
