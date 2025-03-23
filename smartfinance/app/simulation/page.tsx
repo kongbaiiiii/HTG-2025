@@ -15,7 +15,6 @@ import IncomeInput from "@/utils/incomeInput";
 import LoanInput from "@/utils/loanInput";
 import AssetInput from "@/utils/assetInput";
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import LifestyleUpdateDialog from "./components/dialogs/LifestyleUpdateDialog";
 import NegativeBalanceDialog from "./components/dialogs/NegativeBalanceDialog";
 import MonthlySummaryDialog from "./components/dialogs/MonthlySummaryDialog";
@@ -23,6 +22,11 @@ import UniversityExpensesCard from "./components/summary/UniversityExpensesCard"
 import IncomeSourcesCard from "./components/summary/IncomeSourcesCard";
 import OsapInformationCard from "./components/summary/OsapInformationCard";
 import AssetsDebtsCard from "./components/summary/AssetsDebtsCard";
+import RandomEventDialog from "./components/dialogs/RandomEventDialog";
+import type { RandomEvent } from "./components/randomEventType";
+import { randomEvents } from "./components/randomEvents";
+import EndSimulationDialog from "./components/dialogs/EndSimulationDialog";
+import { useRouter } from 'next/navigation';
 
 const MONTH_MAP = {
   1: "January",
@@ -40,21 +44,28 @@ const MONTH_MAP = {
 }
 
 const FinancialSimulation = () => {
+  const router = useRouter();
+
   // Add state for dialog
   const [dialogOpen, setDialogOpen] = useState(true);
   const [dialogStep, setDialogStep] = useState(1); // Add this to track dialog steps
   const [simulationStarted, setSimulationStarted] = useState(false);
   const [simulationMonth, setSimulationMonth] = useState(0);
 
+  // Add this constant to store initial values
+  const [initialValues, setInitialValues] = useState({
+    university: {},
+    income: {},
+    osap: {},
+    assets: {},
+    netWorth: 0
+  });
+
   const [monthlySummary, setMonthlySummary] = useState({});
   const [monthlySummaryDialogOpen, setMonthlySummaryDialogOpen] = useState(false);
 
   const [lifeStyleUpdateDialogOpen, setLifeStyleUpdateDialogOpen] = useState(false);
-  const [selectedLifestyleOption, setSelectedLifestyleOption] = useState("");
 
-  const [selectedDebtType, setSelectedDebtType] = useState("");
-  const [lifestyleAmount, setLifestyleAmount] = useState(0);
-  const [selectedExpenseField, setSelectedExpenseField] = useState("");
 
   const [negativeBalance, setNegativeBalance] = useState(false);
   const [negativeBalanceDialogOpen, setNegativeBalanceDialogOpen] = useState(false);
@@ -94,6 +105,64 @@ const FinancialSimulation = () => {
     otherDebtCompounding: 0,
   });
 
+  const [randomEventDialogOpen, setRandomEventDialogOpen] = useState(false);
+  const [currentRandomEvent, setCurrentRandomEvent] = useState<RandomEvent | null>(null);
+
+  const [endSimulationDialogOpen, setEndSimulationDialogOpen] = useState(false);
+
+  // Function to generate a random event
+  const generateRandomEvent = () => {
+
+    if (randomEvents.length > 0) {
+      // Select a single random event based on weighted probabilities
+
+      // Calculate total probability weight
+      const totalProbability = randomEvents.reduce((sum, event) => sum + event.probability, 0);
+
+      // Generate a random value between 0 and total probability
+      let randomValue = Math.random() * totalProbability;
+
+      // Find the event that corresponds to this random value
+      let selectedEvent = randomEvents[0];
+      for (const event of randomEvents) {
+        randomValue -= event.probability;
+        if (randomValue <= 0) {
+          selectedEvent = event;
+          break;
+        }
+      }
+
+      setCurrentRandomEvent(selectedEvent);
+      setRandomEventDialogOpen(true);
+
+      return selectedEvent;
+    }
+
+    return null;
+  };
+
+  // Function to apply the random event's financial impact
+  const applyRandomEvent = (event: RandomEvent) => {
+    const summary = { ...monthlySummary };
+
+    // Apply the financial impact based on the event type
+    if (event.impactType === "cash") {
+      assetsInfo.cash += event.financialImpact;
+      summary[event.title] = event.financialImpact;
+    } else if (event.impactType === "savings") {
+      assetsInfo.savingsAccount += event.financialImpact;
+      summary[event.title] = event.financialImpact;
+    } else if (event.impactType === "income") {
+      // For recurring income changes
+      incomeInfo.otherIncome += event.financialImpact;
+    } else if (event.impactType === "expense") {
+      // For recurring expense changes
+      universityInfo.other += event.financialImpact;
+    }
+
+    setMonthlySummary(summary);
+  };
+
   // Function to handle input changes
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>, infoType: string) => {
     const { name, value } = e.target;
@@ -128,7 +197,7 @@ const FinancialSimulation = () => {
       console.error("month: ", month);
       throw new Error("Month must be between 1 and 12");
     }
-    else if (month > 12) {
+    else if (month >= 12) {
       month = month % 12;
     }
 
@@ -141,7 +210,7 @@ const FinancialSimulation = () => {
       console.error("month: ", month);
       throw new Error("Month must be between 1 and 12");
     }
-    else if (month > 12) {
+    else if (month >= 12) {
       month = month % 12;
     }
 
@@ -149,8 +218,38 @@ const FinancialSimulation = () => {
     return month === 0 || month === 4;
   }
 
+  function isYearStartMonth(month: number): boolean {
+    // Ensure month is between 1 and 12
+    if (month < 0) {
+      console.error("month: ", month);
+      throw new Error("Month must be between 1 and 12");
+    }
+    else if (month >= 12) {
+      month = month % 12;
+    }
+
+    return month === 0;
+  }
+
   const startSimulation = () => {
     setSimulationStarted(true);
+
+    // Store initial values for later comparison
+    const initialNetWorth =
+      assetsInfo.cash +
+      assetsInfo.savingsAccount -
+      assetsInfo.creditCardDebt -
+      assetsInfo.otherDebt -
+      osapInfo.osapLoanRemaining;
+
+    setInitialValues({
+      university: { ...universityInfo },
+      income: { ...incomeInfo },
+      osap: { ...osapInfo },
+      assets: { ...assetsInfo },
+      netWorth: initialNetWorth
+    });
+
     const summary: { [key: string]: number } = {
       scholarships: incomeInfo.scholarships,
       bursaries: incomeInfo.bursaries,
@@ -162,18 +261,8 @@ const FinancialSimulation = () => {
     assetsInfo.savingsAccount += incomeInfo.bursaries;
     assetsInfo.savingsAccount += osapInfo.osapGrant;
     assetsInfo.savingsAccount += osapInfo.osapLoan;
-    incomeInfo.scholarships = 0;
-    incomeInfo.bursaries = 0;
-    osapInfo.osapGrant = 0;
-    osapInfo.osapLoan = 0;
     setMonthlySummary(summary);
     setMonthlySummaryDialogOpen(true);
-  }
-
-  function calculateBalance(summary: { [key: string]: number }, savingsAccount: number): number {
-    const netChange = Object.values(summary).reduce((acc, curr) => acc + curr, 0);
-    console.log("netChange: ", netChange);
-    return savingsAccount + netChange;
   }
 
   const advanceMonth = () => {
@@ -183,55 +272,87 @@ const FinancialSimulation = () => {
       setNegativeBalanceDialogOpen(true);
       return; // Don't advance month if balance is already negative
     }
+    setMonthlySummary({});
+
+    // Generate random event first
+    const randomEvent = generateRandomEvent();
+
+    // If there's a random event, apply it after dialog is closed
+    if (randomEvent) {
+      // The financial impact will be applied when the dialog is closed
+      setMonthlySummaryDialogOpen(false);
+    }
 
     const summary: { [key: string]: number } = {
       partTimeJob: incomeInfo.partTimeJob,
       parentalSupport: incomeInfo.parentalSupport,
       otherIncome: incomeInfo.otherIncome,
-      otherExpenses: 0,
+    }
+
+    if (isYearStartMonth(simulationMonth)) {
+      assetsInfo.savingsAccount += osapInfo.osapGrant;
+      assetsInfo.savingsAccount += osapInfo.osapLoan;
+      osapInfo.osapLoanRemaining += osapInfo.osapLoan;
+      summary["osapGrant"] = osapInfo.osapGrant;
+      summary["osapLoan"] = osapInfo.osapLoan;
     }
     // 1. income
     assetsInfo.savingsAccount += incomeInfo.partTimeJob;
-    console.log("partTimeJob: ", incomeInfo.partTimeJob);
     assetsInfo.savingsAccount += incomeInfo.parentalSupport;
-    console.log("parentalSupport: ", incomeInfo.parentalSupport);
     assetsInfo.savingsAccount += incomeInfo.otherIncome;
-    console.log("otherIncome: ", incomeInfo.otherIncome);
     // 2. university expenses
     if (isSchoolStartMonth(simulationMonth)) {
       summary["universityTuition"] = -universityInfo.tuition;
-      console.log("universityTuition: ", summary["universityTuition"]);
       assetsInfo.savingsAccount -= universityInfo.tuition;
       summary["universityBooks"] = -universityInfo.books;
-      console.log("universityBooks: ", summary["universityBooks"]);
       assetsInfo.savingsAccount -= universityInfo.books;
     }
     if (isSchoolMonth(simulationMonth)) {
       summary["universityRent"] = -universityInfo.rent;
-      console.log("universityRent: ", summary["universityRent"]);
       assetsInfo.savingsAccount -= universityInfo.rent;
       summary["universityFood"] = -universityInfo.food;
-      console.log("universityFood: ", summary["universityFood"]);
       assetsInfo.savingsAccount -= universityInfo.food;
       summary["universityTransportation"] = -universityInfo.transportation;
-      console.log("universityTransportation: ", summary["universityTransportation"]);
       assetsInfo.savingsAccount -= universityInfo.transportation;
       summary["universityOther"] = -universityInfo.other;
-      console.log("universityOther: ", summary["universityOther"]);
       assetsInfo.savingsAccount -= universityInfo.other;
     }
     // 3. other stuff
     if (assetsInfo.savingsAccount < 0) {
       setNegativeBalance(true);
-      setNegativeBalanceDialogOpen(true);
     }
     else {
       setSimulationMonth(simulationMonth + 1);
-      setMonthlySummaryDialogOpen(true);
+      console.log("simulationMonth: ", simulationMonth);
     }
 
     setMonthlySummary(summary);
   }
+
+  // You can now use initialValues anywhere in your component to compare with current values
+  // For example, you could add a function to calculate change in net worth:
+
+  const calculateNetWorthChange = () => {
+    const currentNetWorth =
+      assetsInfo.cash +
+      assetsInfo.savingsAccount -
+      assetsInfo.creditCardDebt -
+      assetsInfo.otherDebt -
+      osapInfo.osapLoanRemaining;
+
+    return currentNetWorth - initialValues.netWorth;
+  }
+
+  // Function to handle ending the simulation
+  const handleEndSimulation = () => {
+    setEndSimulationDialogOpen(true);
+  };
+
+  // Function to actually end the simulation after dialog is closed
+  const confirmEndSimulation = () => {
+    setEndSimulationDialogOpen(false);
+    router.push('/');
+  };
 
   return (
     <div className="container mx-auto mt-4 mb-4 px-4">
@@ -333,7 +454,9 @@ const FinancialSimulation = () => {
         }
         {simulationStarted &&
           <div className="flex justify-end mt-8 gap-4">
-            <Button className="bg-blue-200 text-black px-4 py-2 rounded-md hover:bg-blue-300" onClick={() => { setSimulationStarted(false) }}>End Simulation</Button>
+            <Button
+              className="bg-blue-200 text-black px-4 py-2 rounded-md hover:bg-blue-300"
+              onClick={handleEndSimulation}>End Simulation</Button>
             <Button className="bg-yellow-200 text-black px-4 py-2 rounded-md hover:bg-yellow-300" onClick={() => { setLifeStyleUpdateDialogOpen(true) }}>Lifestyle Update</Button>
             <Button className="bg-green-200 text-black px-4 py-2 rounded-md hover:bg-green-300" onClick={() => { advanceMonth() }}>Next Month</Button>
           </div>
@@ -361,15 +484,13 @@ const FinancialSimulation = () => {
       </div>
 
       {/* Financial Summary Cards Section */}
-      {simulationStarted && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          {/* Use all the extracted card components */}
-          <UniversityExpensesCard universityInfo={universityInfo} />
-          <IncomeSourcesCard incomeInfo={incomeInfo} />
-          <OsapInformationCard osapInfo={osapInfo} />
-          <AssetsDebtsCard assetsInfo={assetsInfo} />
-        </div>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        {/* Use all the extracted card components */}
+        <UniversityExpensesCard universityInfo={universityInfo} />
+        <IncomeSourcesCard incomeInfo={incomeInfo} />
+        <OsapInformationCard osapInfo={osapInfo} />
+        <AssetsDebtsCard assetsInfo={assetsInfo} />
+      </div>
 
       {/* Lifestyle Update Dialog */}
       <LifestyleUpdateDialog
@@ -383,6 +504,40 @@ const FinancialSimulation = () => {
         setIncomeInfo={setIncomeInfo}
         setOsapInfo={setOsapInfo}
         setAssetsInfo={setAssetsInfo}
+      />
+
+      {/* Random Event Dialog */}
+      {currentRandomEvent && (
+        <RandomEventDialog
+          open={randomEventDialogOpen}
+          onOpenChange={(open) => {
+            setRandomEventDialogOpen(open);
+            if (!open && currentRandomEvent) {
+              // Apply the event when dialog is closed
+              applyRandomEvent(currentRandomEvent);
+
+              if (assetsInfo.savingsAccount < 0) {
+                setNegativeBalance(true);
+                setNegativeBalanceDialogOpen(true);
+              }
+              else {
+                setMonthlySummaryDialogOpen(true);
+              }
+            }
+          }}
+          event={currentRandomEvent}
+        />
+      )}
+
+      {/* End Simulation Dialog */}
+      <EndSimulationDialog
+        open={endSimulationDialogOpen}
+        onOpenChange={setEndSimulationDialogOpen}
+        simulationMonth={simulationMonth}
+        netWorthChange={calculateNetWorthChange()}
+        initialNetWorth={initialValues.netWorth}
+        onContinue={() => setEndSimulationDialogOpen(false)}
+        onEnd={confirmEndSimulation}
       />
     </div>
   );

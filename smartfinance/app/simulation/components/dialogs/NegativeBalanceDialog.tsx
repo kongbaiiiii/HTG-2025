@@ -39,7 +39,7 @@ const NegativeBalanceDialog: React.FC<NegativeBalanceDialogProps> = ({
           </DialogTitle>
           <DialogDescription className="pt-2 text-base">
             Your savings account has a negative balance of <span className="font-bold text-red-600">${Math.abs(balance).toLocaleString()}</span>.
-            <p className="mt-2">You need to make some lifestyle changes to continue your education:</p>
+            You need to make some lifestyle changes to continue your education:
           </DialogDescription>
         </DialogHeader>
 
