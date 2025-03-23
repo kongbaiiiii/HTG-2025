@@ -115,7 +115,3 @@ We welcome contributions to SmartFinance! Please feel free to submit a Pull Requ
    git push origin feature/amazing-feature
    ```
 5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
