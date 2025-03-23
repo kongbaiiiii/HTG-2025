@@ -9,18 +9,6 @@ export default function AssetInput({ assetsInfo, handleAssetsInfoChange }: { ass
     </DialogDescription>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
       <div className="flex flex-col">
-        <label htmlFor="cash" className="text-sm font-medium mb-1">Cash on Hand ($)</label>
-        <input
-          type="number"
-          id="cash"
-          name="cash"
-          min="0"
-          value={assetsInfo.cash}
-          onChange={handleAssetsInfoChange}
-          className="border rounded-md p-2"
-        />
-      </div>
-      <div className="flex flex-col">
         <label htmlFor="savingsAccount" className="text-sm font-medium mb-1">Savings Account ($)</label>
         <input
           type="number"
@@ -28,6 +16,18 @@ export default function AssetInput({ assetsInfo, handleAssetsInfoChange }: { ass
           name="savingsAccount"
           min="0"
           value={assetsInfo.savingsAccount}
+          onChange={handleAssetsInfoChange}
+          className="border rounded-md p-2"
+        />
+      </div>
+      <div className="flex flex-col">
+        <label htmlFor="savingsAccountInterest" className="text-sm font-medium mb-1">Savings Account Interest (%)</label>
+        <input
+          type="number"
+          id="savingsAccountInterest"
+          name="savingsAccountInterest"
+          min="0"
+          value={assetsInfo.savingsAccountInterest}
           onChange={handleAssetsInfoChange}
           className="border rounded-md p-2"
         />

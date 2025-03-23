@@ -21,8 +21,8 @@ import {
 
 interface AssetsDebtsCardProps {
   assetsInfo: {
-    cash: number;
     savingsAccount: number;
+    savingsAccountInterest: number;
     creditCardDebt: number;
     otherDebt: number;
   };
@@ -42,12 +42,12 @@ const AssetsDebtsCard: React.FC<AssetsDebtsCardProps> = ({
         <Table>
           <TableBody>
             <TableRow>
-              <TableCell className="flex items-center gap-2"><DollarSign size={16} /> Cash</TableCell>
-              <TableCell className="text-right font-mono">${assetsInfo.cash.toLocaleString()}</TableCell>
-            </TableRow>
-            <TableRow>
               <TableCell className="flex items-center gap-2"><PiggyBank size={16} /> Savings Account</TableCell>
               <TableCell className="text-right font-mono">${assetsInfo.savingsAccount.toLocaleString()}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell className="flex items-center gap-2"><DollarSign size={16} /> Savings Account Interest</TableCell>
+              <TableCell className="text-right font-mono">{assetsInfo.savingsAccountInterest.toLocaleString() + "%"}</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="flex items-center gap-2 text-red-500"><CreditCard size={16} /> Credit Card Debt</TableCell>

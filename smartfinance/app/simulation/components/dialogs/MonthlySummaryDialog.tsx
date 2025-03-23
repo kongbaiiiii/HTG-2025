@@ -35,9 +35,9 @@ const MonthlySummaryDialog: React.FC<MonthlySummaryDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
+      {/* <DialogTrigger asChild>
         <Button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-300 hover:text-black" onClick={() => onOpenChange(true)}>View {month} Summary</Button>
-      </DialogTrigger>
+      </DialogTrigger> */}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Summary</DialogTitle>

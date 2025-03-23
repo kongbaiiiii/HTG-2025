@@ -15,6 +15,7 @@ type EndSimulationDialogProps = {
   simulationMonth: number;
   netWorthChange: number;
   initialNetWorth: number;
+  finalScore: number;
   onContinue: () => void;
   onEnd: () => void;
 };
@@ -25,6 +26,7 @@ const EndSimulationDialog = ({
   simulationMonth,
   netWorthChange,
   initialNetWorth,
+  finalScore,
   onContinue,
   onEnd
 }: EndSimulationDialogProps) => {

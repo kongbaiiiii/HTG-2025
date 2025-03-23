@@ -51,8 +51,8 @@ interface LifestyleUpdateDialogProps {
     osapLoanRemaining: number;
   };
   assetsInfo: {
-    cash: number;
     savingsAccount: number;
+    savingsAccountInterest: number;
     creditCardDebt: number;
     otherDebt: number;
     otherDebtInterest: number;

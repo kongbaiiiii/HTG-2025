@@ -27,6 +27,9 @@ import type { RandomEvent } from "./components/randomEventType";
 import { randomEvents } from "./components/randomEvents";
 import EndSimulationDialog from "./components/dialogs/EndSimulationDialog";
 import { useRouter } from 'next/navigation';
+import SimulationChat from "@/components/simulationchat";
+import { useAuth } from "@clerk/nextjs";
+import LeaderboardDialog from "./components/dialogs/LeaderboardDialog";
 
 const MONTH_MAP = {
   1: "January",
@@ -44,6 +47,8 @@ const MONTH_MAP = {
 }
 
 const FinancialSimulation = () => {
+
+  const { userId } = useAuth();
   const router = useRouter();
 
   // Add state for dialog
@@ -70,7 +75,7 @@ const FinancialSimulation = () => {
   const [negativeBalance, setNegativeBalance] = useState(false);
   const [negativeBalanceDialogOpen, setNegativeBalanceDialogOpen] = useState(false);
   const [universityInfo, setUniversityInfo] = useState({
-    tuition: 8000,
+    tuition: 4000,
     rent: 1000,
     food: 300,
     transportation: 30,
@@ -97,8 +102,8 @@ const FinancialSimulation = () => {
   });
 
   const [assetsInfo, setAssetsInfo] = useState({
-    cash: 500,
     savingsAccount: 1000,
+    savingsAccountInterest: 0.05,
     creditCardDebt: 0,
     otherDebt: 0,
     otherDebtInterest: 0,
@@ -109,6 +114,10 @@ const FinancialSimulation = () => {
   const [currentRandomEvent, setCurrentRandomEvent] = useState<RandomEvent | null>(null);
 
   const [endSimulationDialogOpen, setEndSimulationDialogOpen] = useState(false);
+
+  // Add state for leaderboard
+  const [leaderboard, setLeaderboard] = useState<Array<{ email: string, score: number }>>([]);
+  const [leaderboardDialogOpen, setLeaderboardDialogOpen] = useState(false);
 
   // Function to generate a random event
   const generateRandomEvent = () => {
@@ -146,18 +155,9 @@ const FinancialSimulation = () => {
     const summary = { ...monthlySummary };
 
     // Apply the financial impact based on the event type
-    if (event.impactType === "cash") {
-      assetsInfo.cash += event.financialImpact;
-      summary[event.title] = event.financialImpact;
-    } else if (event.impactType === "savings") {
+    if (event.impactType === "savings") {
       assetsInfo.savingsAccount += event.financialImpact;
       summary[event.title] = event.financialImpact;
-    } else if (event.impactType === "income") {
-      // For recurring income changes
-      incomeInfo.otherIncome += event.financialImpact;
-    } else if (event.impactType === "expense") {
-      // For recurring expense changes
-      universityInfo.other += event.financialImpact;
     }
 
     setMonthlySummary(summary);
@@ -236,7 +236,6 @@ const FinancialSimulation = () => {
 
     // Store initial values for later comparison
     const initialNetWorth =
-      assetsInfo.cash +
       assetsInfo.savingsAccount -
       assetsInfo.creditCardDebt -
       assetsInfo.otherDebt -
@@ -289,6 +288,21 @@ const FinancialSimulation = () => {
       otherIncome: incomeInfo.otherIncome,
     }
 
+    // Calculate and add interest on savings account (if positive)
+    if (assetsInfo.savingsAccount > 0) {
+      const monthlyInterest = calculateMonthlyInterest(
+        assetsInfo.savingsAccount,
+        assetsInfo.savingsAccountInterest,
+        1 // Annual compounding
+      );
+
+      // Add interest to savings account
+      assetsInfo.savingsAccount += monthlyInterest;
+
+      // Add interest to summary
+      summary["savingsInterest"] = monthlyInterest;
+    }
+
     if (isYearStartMonth(simulationMonth)) {
       assetsInfo.savingsAccount += osapInfo.osapGrant;
       assetsInfo.savingsAccount += osapInfo.osapLoan;
@@ -323,7 +337,6 @@ const FinancialSimulation = () => {
     }
     else {
       setSimulationMonth(simulationMonth + 1);
-      console.log("simulationMonth: ", simulationMonth);
     }
 
     setMonthlySummary(summary);
@@ -334,7 +347,6 @@ const FinancialSimulation = () => {
 
   const calculateNetWorthChange = () => {
     const currentNetWorth =
-      assetsInfo.cash +
       assetsInfo.savingsAccount -
       assetsInfo.creditCardDebt -
       assetsInfo.otherDebt -
@@ -349,9 +361,200 @@ const FinancialSimulation = () => {
   };
 
   // Function to actually end the simulation after dialog is closed
-  const confirmEndSimulation = () => {
+  const confirmEndSimulation = async () => {
     setEndSimulationDialogOpen(false);
-    router.push('/');
+
+    // Check if the user has completed at least 12 months
+    if (simulationMonth >= 12) {
+      const finalScore = calculateEndingScore();
+      try {
+        const leaderboardReq = await fetch('/api/get_user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userId,
+            score: finalScore
+          })
+        });
+        if (leaderboardReq.ok) {
+          const data = await leaderboardReq.json();
+          setLeaderboard(data.leaderboard || []);
+          setLeaderboardDialogOpen(true);
+        } else {
+          // Handle error
+          console.error('Failed to end simulation');
+          // router.push('/');
+        }
+      } catch (error) {
+        console.error('Error ending simulation:', error);
+        // router.push('/');
+      }
+    } else {
+      // If less than 12 months, just go back to home
+      // router.push('/');
+    }
+  };
+
+  const getContext = (): string => {
+    // Calculate current month name and year
+    const currentMonthIndex = (simulationMonth + 8) % 12;
+
+    // Calculate net worth
+    const currentNetWorth =
+      assetsInfo.savingsAccount -
+      assetsInfo.creditCardDebt -
+      assetsInfo.otherDebt -
+      osapInfo.osapLoanRemaining;
+
+    // Format currency values
+    const formatCurrency = (value: number): string => {
+      return new Intl.NumberFormat('en-CA', {
+        style: 'currency',
+        currency: 'CAD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    };
+
+    // Build the context string
+    let context = `
+Current Simulation Status:
+-------------------------
+
+Financial Summary:
+-----------------
+Net Worth: ${formatCurrency(currentNetWorth)} (${formatCurrency(calculateNetWorthChange())} change since start)
+
+University Expenses:
+------------------
+Tuition: ${formatCurrency(universityInfo.tuition)} per semester
+Rent: ${formatCurrency(universityInfo.rent)} per month
+Food: ${formatCurrency(universityInfo.food)} per month
+Transportation: ${formatCurrency(universityInfo.transportation)} per month
+Books: ${formatCurrency(universityInfo.books)} per semester
+Other: ${formatCurrency(universityInfo.other)} per month
+
+Income Sources:
+-------------
+Part-Time Job: ${formatCurrency(incomeInfo.partTimeJob)} per month
+Scholarships: ${formatCurrency(incomeInfo.scholarships)} per year
+Bursaries: ${formatCurrency(incomeInfo.bursaries)} per year
+RESP: ${formatCurrency(incomeInfo.RESP)} total
+Parental Support: ${formatCurrency(incomeInfo.parentalSupport)} per month
+Other Income: ${formatCurrency(incomeInfo.otherIncome)} per month
+
+OSAP Information:
+---------------
+OSAP Grant: ${formatCurrency(osapInfo.osapGrant)} per year
+OSAP Loan: ${formatCurrency(osapInfo.osapLoan)} per year
+Total OSAP Aid: ${formatCurrency(osapInfo.totalOsapAid)} per year
+OSAP Loan Remaining: ${formatCurrency(osapInfo.osapLoanRemaining)}
+
+Assets and Debts:
+---------------
+Savings Account: ${formatCurrency(assetsInfo.savingsAccount)}
+Savings Account Interest: ${assetsInfo.savingsAccountInterest.toLocaleString() + "%"}
+Credit Card Debt: ${formatCurrency(assetsInfo.creditCardDebt)}
+Other Debt: ${formatCurrency(assetsInfo.otherDebt)} (${assetsInfo.otherDebtInterest}% interest)
+`;
+
+    // Add information about recent events if available
+    if (Object.keys(monthlySummary).length > 0) {
+      context += `
+Recent Financial Activities:
+--------------------------
+`;
+      for (const [key, value] of Object.entries(monthlySummary)) {
+        context += `${key}: ${formatCurrency(value as number)}\n`;
+      }
+    }
+
+    return context;
+  };
+
+  // Function to calculate monthly interest
+  const calculateMonthlyInterest = (
+    principle: number,
+    interestRate: number,
+    compoundsPerYear: number
+  ): number => {
+    // Convert annual interest rate to decimal (e.g., 5% -> 0.05)
+    const rateDecimal = interestRate / 100;
+
+    // Calculate the interest for one compounding period
+    const interestPerPeriod = principle * (rateDecimal / compoundsPerYear);
+
+    // For monthly interest, we need to adjust based on compounding frequency
+    // If compounding monthly, return as is
+    // If compounding quarterly, return 1/3 of quarterly interest, etc.
+    const monthsPerCompoundingPeriod = 12 / compoundsPerYear;
+    const monthlyInterest = interestPerPeriod / monthsPerCompoundingPeriod;
+
+    return monthlyInterest;
+  };
+
+  // Function to calculate the final simulation score
+  const calculateEndingScore = (): number => {
+    // Calculate current net worth
+    const currentNetWorth =
+      assetsInfo.savingsAccount -
+      assetsInfo.creditCardDebt -
+      assetsInfo.otherDebt -
+      osapInfo.osapLoanRemaining;
+
+    // Calculate net worth change (as a percentage of initial net worth)
+    const netWorthChange = initialValues.netWorth !== 0
+      ? (currentNetWorth - initialValues.netWorth) / Math.abs(initialValues.netWorth)
+      : currentNetWorth > 0 ? 1 : -1;
+
+    // Calculate debt ratio (total debt / net worth)
+    // Lower is better, capped at 2 for scoring purposes
+    const totalDebt = assetsInfo.creditCardDebt + assetsInfo.otherDebt + osapInfo.osapLoanRemaining;
+    const debtRatio = currentNetWorth > 0
+      ? Math.min(totalDebt / Math.max(currentNetWorth, 1), 2)
+      : 2;
+
+    // Calculate OSAP repayment progress
+    // What percentage of initial OSAP has been repaid
+    const initialOsapLoan = initialValues.osap.osapLoanRemaining;
+    const osapRepaymentRatio = initialOsapLoan > 0
+      ? (initialOsapLoan - osapInfo.osapLoanRemaining) / initialOsapLoan
+      : 1;
+
+    // Calculate simulation length factor
+    // Longer simulations should get higher scores, but with diminishing returns
+    const monthsFactor = Math.min(simulationMonth / 48, 1); // Cap at 4 years
+
+    // Calculate credit card debt penalty
+    // Having credit card debt is particularly bad due to high interest
+    const creditCardPenalty = assetsInfo.creditCardDebt > 0
+      ? Math.min(assetsInfo.creditCardDebt / 5000, 1) * -20
+      : 0;
+
+    // Calculate savings bonus
+    // Reward having emergency savings
+    const savingsBonus = assetsInfo.savingsAccount > 0
+      ? Math.min(assetsInfo.savingsAccount / 10000, 1) * 15
+      : 0;
+
+    // Base score components
+    const netWorthScore = netWorthChange * 40; // -40 to +40 points
+    const debtScore = (1 - debtRatio / 2) * 20; // 0 to 20 points
+    const osapScore = osapRepaymentRatio * 15; // 0 to 15 points
+    const timeScore = monthsFactor * 10; // 0 to 10 points
+
+    // Calculate final score (can be negative in worst cases)
+    let finalScore = netWorthScore + debtScore + osapScore + timeScore + creditCardPenalty + savingsBonus;
+
+    // Ensure score is at least 0
+    finalScore = Math.max(0, finalScore);
+
+    // Cap score at 100
+    finalScore = Math.min(100, finalScore);
+
+    return Math.round(finalScore);
   };
 
   return (
@@ -361,9 +564,6 @@ const FinancialSimulation = () => {
           setDialogStep(1);
           setDialogOpen(!dialogOpen);
         }}>
-          <DialogTrigger asChild>
-            <Button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-300 hover:text-black" onClick={() => setDialogOpen(true)}>Edit Simulation Information</Button>
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               {dialogStep === 1 ? (
@@ -448,17 +648,28 @@ const FinancialSimulation = () => {
           Financial Fortune Simulator 💰
         </h1>
         {!simulationStarted &&
-          <div className="flex justify-center mt-8">
+          <div className="flex justify-center mt-8 gap-4">
+            <Button className="bg-blue-200 text-black px-4 py-2 rounded-md hover:bg-blue-300" onClick={() => setDialogOpen(true)}>Edit Simulation Information</Button>
             <Button className="bg-green-200 text-black px-4 py-2 rounded-md hover:bg-green-300" onClick={() => startSimulation()}>Start Simulation</Button>
           </div>
         }
         {simulationStarted &&
-          <div className="flex justify-end mt-8 gap-4">
-            <Button
-              className="bg-blue-200 text-black px-4 py-2 rounded-md hover:bg-blue-300"
-              onClick={handleEndSimulation}>End Simulation</Button>
-            <Button className="bg-yellow-200 text-black px-4 py-2 rounded-md hover:bg-yellow-300" onClick={() => { setLifeStyleUpdateDialogOpen(true) }}>Lifestyle Update</Button>
-            <Button className="bg-green-200 text-black px-4 py-2 rounded-md hover:bg-green-300" onClick={() => { advanceMonth() }}>Next Month</Button>
+          <div className="flex justify-between items-center">
+            <div className='text-lg font-bold'>Current Month: {MONTH_MAP[(simulationMonth + 8) % 12 as keyof typeof MONTH_MAP]}</div>
+            <div className="flex justify-end mt-8 gap-4">
+              <Button
+                className="bg-blue-200 text-black px-4 py-2 rounded-md hover:bg-blue-300"
+                onClick={handleEndSimulation}>End Simulation</Button>
+              <Button
+                className="bg-purple-200 text-black px-4 py-2 rounded-md hover:bg-purple-300"
+                onClick={() => setMonthlySummaryDialogOpen(true)}>View Month Summary</Button>
+              <Button
+                className="bg-yellow-200 text-black px-4 py-2 rounded-md hover:bg-yellow-300"
+                onClick={() => { setLifeStyleUpdateDialogOpen(true) }}>Lifestyle Update</Button>
+              <Button
+                className="bg-green-200 text-black px-4 py-2 rounded-md hover:bg-green-300"
+                onClick={() => { advanceMonth() }}>Next Month</Button>
+            </div>
           </div>
         }
         {simulationStarted &&
@@ -536,9 +747,25 @@ const FinancialSimulation = () => {
         simulationMonth={simulationMonth}
         netWorthChange={calculateNetWorthChange()}
         initialNetWorth={initialValues.netWorth}
+        finalScore={calculateEndingScore()}
         onContinue={() => setEndSimulationDialogOpen(false)}
         onEnd={confirmEndSimulation}
       />
+
+      {/* Leaderboard Dialog - only shown after 12+ months */}
+      <LeaderboardDialog
+        open={leaderboardDialogOpen}
+        onOpenChange={(open) => {
+          setLeaderboardDialogOpen(open);
+          if (!open) {
+            router.push('/');
+          }
+        }}
+        leaderboard={leaderboard}
+        yourScore={calculateEndingScore()}
+      />
+
+      <SimulationChat context={getContext()} />
     </div>
   );
 };
