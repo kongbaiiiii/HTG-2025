@@ -303,7 +303,7 @@ const FinancialSimulation = () => {
       summary["savingsInterest"] = monthlyInterest;
     }
 
-    if (isYearStartMonth(simulationMonth)) {
+    if (simulationMonth !== 0 && isYearStartMonth(simulationMonth)) {
       assetsInfo.savingsAccount += osapInfo.osapGrant;
       assetsInfo.savingsAccount += osapInfo.osapLoan;
       osapInfo.osapLoanRemaining += osapInfo.osapLoan;
