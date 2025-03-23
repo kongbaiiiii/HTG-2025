@@ -20,7 +20,6 @@ export default async function Navbar() {
       <div className="flex items-center gap-4">
         <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Home</Link>
         <Link href="/simulation" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Simulation</Link>
-        <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">About</Link>
         <SignedOut>
           <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors  text-lg [&>*]:cursor-pointer [&>*]:font-bold">
             <SignInButton />
@@ -30,6 +29,7 @@ export default async function Navbar() {
           </div>
         </SignedOut>
         <SignedIn>
+          <Link href="/lesson" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Lesson</Link>
           <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold [&>*]:cursor-pointer">
             <UserButton />
           </div>

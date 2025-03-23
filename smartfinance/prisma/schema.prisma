@@ -19,6 +19,7 @@ model User {
   email         String    @unique
   name          String?
   imageUrl      String?
+  simulationScore  Int        @default(0)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -35,4 +36,11 @@ enum LessonDataType {
   STRING
   IMGLABEL
   IMGURL
+}
+
+model Article {
+  id        Int      @id @default(autoincrement())
+  title     String
+  subtitle  String?
+  content   Json     // Array of content blocks
 }
