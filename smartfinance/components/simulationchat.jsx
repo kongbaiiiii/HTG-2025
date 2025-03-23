@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Send, MessageCircle } from "lucide-react";
 
-export default function SimulationChat({ context: string }) {
+export default function SimulationChat({ context }) {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");

@@ -5,8 +5,8 @@ import {
   MessageSquare,
 } from "lucide-react";
 
-export default function HomePage() {
-  const { userId } = auth();
+export default async function HomePage() {
+  const { userId } = await auth();
   const isSignedIn = !!userId;
 
   return (
@@ -35,7 +35,7 @@ export default function HomePage() {
               icon: <BookOpen className="text-green-600 dark:text-green-400" />,
               title: "Financial Literacy Lessons",
               description: "Learn core money skills like saving, investing, and managing debt — at your own pace.",
-              href: "/lessons",
+              href: "/lesson",
               color: "green",
             },
             {
@@ -74,11 +74,10 @@ export default function HomePage() {
                   <button
                     type="submit"
                     disabled={!isSignedIn}
-                    className={`mt-4 w-full rounded-full text-sm px-4 py-2 transition ${
-                      isSignedIn
-                        ? `${bgMap[color]} text-white`
-                        : "bg-gray-400 text-white cursor-not-allowed"
-                    }`}
+                    className={`mt-4 w-full rounded-full text-sm px-4 py-2 transition ${isSignedIn
+                      ? `${bgMap[color]} text-white`
+                      : "bg-gray-400 text-white cursor-not-allowed"
+                      }`}
                   >
                     {isSignedIn ? "Go" : "Sign in to use"}
                   </button>

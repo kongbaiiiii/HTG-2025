@@ -12,7 +12,7 @@ export async function POST(req) {
     const message = body.message;
     const context = body.context;
 
-    console.log(message);
+    // console.log(message);
 
     const chatCompletion = await openai.chat.completions.create({
       model: "gpt-4o-mini-2024-07-18",
