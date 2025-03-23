@@ -18,8 +18,6 @@ export default async function Navbar() {
         <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Smart Finance</h1>
       </div>
       <div className="flex items-center gap-4">
-        <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Home</Link>
-        <Link href="/simulation" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Simulation</Link>
         <SignedOut>
           <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors  text-lg [&>*]:cursor-pointer [&>*]:font-bold">
             <SignInButton />
@@ -29,7 +27,10 @@ export default async function Navbar() {
           </div>
         </SignedOut>
         <SignedIn>
+          <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Home</Link>
+          <Link href="/simulation" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Simulation</Link>
           <Link href="/lesson" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Lesson</Link>
+          <Link href="/chat" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold">Chat</Link>
           <div className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-lg font-bold [&>*]:cursor-pointer">
             <UserButton />
           </div>
