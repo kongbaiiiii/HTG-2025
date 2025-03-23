@@ -40,7 +40,7 @@ const EndSimulationDialog = ({
           <DialogTitle>
             {simulationMonth < 12 ? "Simulation Ending Early" : "Congratulations!"}
           </DialogTitle>
-          <DialogDescription className="text-base mt-4">
+          <div className="text-base mt-4">
             {simulationMonth < 12 ? (
               <>
                 <p>You've only simulated for {simulationMonth} {simulationMonth === 1 ? 'month' : 'months'}.</p>
@@ -59,7 +59,7 @@ const EndSimulationDialog = ({
                 <p className="mt-4">Thanks for playing Financial Fortune Simulator!</p>
               </>
             )}
-          </DialogDescription>
+          </div>
         </DialogHeader>
         <DialogFooter className="flex justify-between mt-6">
           {simulationMonth < 12 && (

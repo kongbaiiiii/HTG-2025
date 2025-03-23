@@ -463,11 +463,11 @@ const FinancialSimulation = () => {
         }
         {simulationStarted &&
           <>
-            <p className="text-base text-center text-black mb-4">{MONTH_MAP[(simulationMonth + 8) % 12 as keyof typeof MONTH_MAP]}</p>
             <MonthlySummaryDialog
               open={monthlySummaryDialogOpen}
               onOpenChange={setMonthlySummaryDialogOpen}
               monthlySummary={monthlySummary}
+              month={MONTH_MAP[(simulationMonth + 8) % 12 as keyof typeof MONTH_MAP]}
               savingsAccountBalance={assetsInfo.savingsAccount}
             />
 

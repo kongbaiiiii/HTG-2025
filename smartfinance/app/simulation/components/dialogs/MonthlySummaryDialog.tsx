@@ -23,18 +23,20 @@ interface MonthlySummaryDialogProps {
   onOpenChange: (open: boolean) => void;
   monthlySummary: { [key: string]: number };
   savingsAccountBalance: number;
+  month: string;
 }
 
 const MonthlySummaryDialog: React.FC<MonthlySummaryDialogProps> = ({
   open,
   onOpenChange,
   monthlySummary,
+  month,
   savingsAccountBalance
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-300 hover:text-black" onClick={() => onOpenChange(true)}>View Monthly Summary</Button>
+        <Button className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-300 hover:text-black" onClick={() => onOpenChange(true)}>View {month} Summary</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
